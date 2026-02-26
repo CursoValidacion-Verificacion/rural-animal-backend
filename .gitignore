@@ -45,6 +45,14 @@ Thumbs.db
 hs_err_pid*
 replay_pid*
 
+# AspectJ weaver diagnostic dumps (ajcore.YYYYMMDD.HHMMSS.pid.txt)
+ajcore*.txt
+
+# Test / report output
+build/reports/
+build/test-results/
+build/allure-results/
+
 # Additional directories
 build/tmp/
 build/classes/
