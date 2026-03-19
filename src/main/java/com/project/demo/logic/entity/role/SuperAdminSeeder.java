@@ -4,6 +4,7 @@ import com.project.demo.logic.entity.user.TblUser;
 import com.project.demo.logic.entity.user.UserRepository;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -11,6 +12,7 @@ import java.time.LocalDate;
 import java.util.Optional;
 
 @Component
+@Order(2)
 public class SuperAdminSeeder implements ApplicationListener<ContextRefreshedEvent> {
     private final TblRoleRepository roleRepository;
 

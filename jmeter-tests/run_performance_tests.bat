@@ -8,8 +8,8 @@ SET "REPORT_DIR=%~dp0html-report"
 SET "BASE_URL=localhost"
 SET "PORT=8080"
 SET "PROTOCOL=http"
-SET "THREADS=10"
-SET "RAMP_UP=5"
+SET "THREADS=200"
+SET "RAMP_UP=10"
 SET "LOOPS=5"
 echo === Rural Animal - Pruebas de Rendimiento ===
 echo Servidor: %PROTOCOL%://%BASE_URL%:%PORT%
