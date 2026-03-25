@@ -45,6 +45,12 @@ dependencies {
 
 	testImplementation 'io.qameta.allure:allure-junit5:2.24.0'
 
+	// REST Assured para pruebas funcionales de API
+	testImplementation 'io.rest-assured:rest-assured:5.4.0'
+	testImplementation 'io.rest-assured:spring-mock-mvc:5.4.0'
+	testImplementation 'io.rest-assured:json-path:5.4.0'
+	testImplementation 'io.rest-assured:xml-path:5.4.0'
+
 	// https://mvnrepository.com/artifact/com.cloudinary/cloudinary-http44
 	implementation group: 'com.cloudinary', name: 'cloudinary-http44', version: '1.39.0'
 
