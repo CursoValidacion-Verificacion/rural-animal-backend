@@ -20,7 +20,7 @@ public final class AuthTestData {
 
     public static Map<String, Object> validLoginPayload() {
         Map<String, Object> payload = new HashMap<>();
-        payload.put("email", "andres@gmail.com");
+        payload.put("email", "andres.test.auth@ruraltest.com");
         payload.put("password", "Test123!");
         return payload;
     }
@@ -94,7 +94,14 @@ public final class AuthTestData {
     public static Map<String, Object> signupWithMinorAgePayload() {
         Map<String, Object> payload = validSignupPayload();
         payload.put("email", "minor@ruraltest.com");
-        payload.put("birthDate", "2015-06-01"); // Menos de 18 años
+        payload.put("birthDate", "2015-06-01"); // Menos de 18 anos
+        return payload;
+    }
+
+    // Payload con email que ya existe en BD (mismo que el usuario insertado en @BeforeEach)
+    public static Map<String, Object> duplicateEmailSignupPayload() {
+        Map<String, Object> payload = validSignupPayload();
+        payload.put("email", "andres.test.auth@ruraltest.com");
         return payload;
     }
 }

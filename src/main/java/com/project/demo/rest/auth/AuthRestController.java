@@ -2,8 +2,9 @@ package com.project.demo.rest.auth;
 
 import com.project.demo.logic.entity.auth.AuthenticationService;
 import com.project.demo.logic.entity.auth.JwtService;
-
 import com.project.demo.logic.entity.auth.TokenStorage;
+import com.project.demo.logic.entity.direction.TblDirection;
+import com.project.demo.logic.entity.direction.TblDirectionRepository;
 import com.project.demo.logic.entity.http.GlobalResponseHandler;
 import com.project.demo.logic.entity.role.RoleEnum;
 import com.project.demo.logic.entity.role.TblRole;
@@ -42,6 +43,9 @@ public class AuthRestController {
 
     @Autowired
     private TblRoleRepository roleRepository;
+
+    @Autowired
+    private TblDirectionRepository tblDirectionRepository;
 
     private final TokenStorage tokenStorage;
 
@@ -193,6 +197,15 @@ public class AuthRestController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Role not found");
         }
         user.setRole(optionalRole.get());
+
+        if (user.getDirection() != null) {
+            TblDirection tblDirection = new TblDirection();
+            tblDirection.setDistrict(user.getDirection().getDistrict());
+            tblDirection.setCanton(user.getDirection().getCanton());
+            tblDirection.setProvince(user.getDirection().getProvince());
+            tblDirection.setOtherDetails(user.getDirection().getOtherDetails());
+            user.setDirection(tblDirectionRepository.save(tblDirection));
+        }
 
         // Save user
         TblUser savedUser = userRepository.save(user);

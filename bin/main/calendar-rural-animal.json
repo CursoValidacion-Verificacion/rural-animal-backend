@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "componentes-server",
+  "private_key_id": "de2a70a84be852d5b4bdc07213d914a3cda4ad7a",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCyl6+F/g23Ef3g\ndeZwEsZIMX5UXhbZBOkeX7YI6dh1UIU3vDOrb1ezYLUg3cylA6yEQcVkC0R3qKVA\npFDWv2HCgCRljwGoRBJ9Z044MqgSAe1Od7N2o0mpZSAX1w6F//5Vyha7CYX5/ab+\nIpKpdKr3Ft7T7IzledXpwtDqr+iXV0kzN3wzGucU7FAP9x/Tsfigpaw0sfivYFIV\nSS1eZj46gATmTIoVf+1bsKqqcl2/+hQU+NprtCCcCOQz4TkA8MM6wz43D+m8+3ay\nP6o5fWEs7cdQKH6/OKi3w5BlSjR3Z0m3io8Nx8mxslCog+ybbxkfR31+xNNYo4Tt\nCt/seINVAgMBAAECggEAK7cphdj8LnW++TSi5YgS9RT4YVpuqUyka4TuIBxtmbnO\nAiiVVT957jSb4aGpODNABVe8I5MGfWvQl5QhHY/XNC79ucZZl4CiLgQdh3AO5+mE\n1xJB4aZyn35bbrp7mZ1h+knvanUYUGsgd1CrKcOfHcCBZsqeaoV6MTA4x1mry29u\npX7kogI9FMY/zBFPT2ggvtAhgp7uzXQQgf5DdCsxyvh5G2do5SsAmW5WpowtIpiZ\nUbrv6Df3z2lsR7zDL5Qkvp2Ugj1wDSEhfwsRLGJHfa3yq27Wq6tBUDPjYwbpziZB\n19YXBTp8KOfp1bVNyRuGEdmrYVbpDnB4ztxbsAFjAQKBgQD0S+JRNZyoI6yguLic\nr/Mp07nfSzG4ffJJMNXmXRdTq9QOH478tNz9msSPWXOw35FzrwPvyaMtIdj9Ba2O\np1wVB9wYTX+JP8NTbMUZ6VmqlbPhNu2o3pCm4egapeYEXZZdo7FCEfVM2uxbbcZb\ncaxqkVpsCRNoWh5ZlWxR5rIPdQKBgQC7Jf3X1YUnf+zKFN9pb4X+mJCDz918u2PK\nTcLy9npzWPwCNEzycmpaUKBFwDWsCNGh3HUhOSjbGms1UyTnyIAW3zaiKkJOINW6\n5w/EwpmMx/if5ItDPxDN6pVpD/FvkLP5asH8+wg+jFfuT0bAQ9CsnhRu5PLGqwDC\ny52/hNEIYQKBgAEcXzkTT1UMZHqOnHhJ7IciKVQ0mVNHb1SZ3j8f6T0+KMavqgzI\nHcEhdQdZ1sbVHWozP4dVmWJZJw1veyyM4kRONtf9cjkDizXT5smJYBkAeULq5wW/\njVTU7iNA4dzfOBHQ7rtoLX9d93kq9J3x1GDfrFOVbvsofb7WiRmOPP0JAoGAIcJS\nrhJ4OI3c+v8U5gIWG70NpJlkjNGIyL+KQSWxJQmSPBuPHdUB1lTg9HQdunDEz/vi\nrSGQeyWi3TWoXJ9Qa8/MHSieWVWW+GYh9A5egIS6Fq21aWYA9AQy+4bCuKtTq9RU\nNfxaml3apsRqMNiK1fiWGwL1wFysgHcWd6vPwUECgYAfa3MQ3IHIMqjIfgWjXF70\nlY770H0e6JLzOSpZwHV+iaQLulJBTKP6fF7z6gmCK7E9JGn2z9+4NSk20dyFA35r\nX2QDi27g37KrEe2GarnaXlvOE5xcY/6l1TZ7+gdxNr2IJQU++8SZkiGq8d7wVpAX\nEaGiV/XAtxOzgSWtgaEDHA==\n-----END PRIVATE KEY-----\n",
+  "client_email": "rural-animal-calendar@componentes-server.iam.gserviceaccount.com",
+  "client_id": "105569184330144267017",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/rural-animal-calendar%40componentes-server.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

@@ -79,4 +79,11 @@ public final class UserTestData {
         payload.put("email", "badphone@ruraltest.com");
         return payload;
     }
+
+    // Email que coincide con el usuario insertado en @BeforeEach del test
+    public static Map<String, Object> duplicateEmailPayload() {
+        Map<String, Object> payload = validUserPayload();
+        payload.put("email", "carlos.user.test@ruraltest.com");
+        return payload;
+    }
 }

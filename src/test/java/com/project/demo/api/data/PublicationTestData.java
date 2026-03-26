@@ -52,4 +52,13 @@ public final class PublicationTestData {
         payload.put("direction", direction);
         return payload;
     }
+
+    // Payload para actualizacion parcial (solo campos que pueden cambiar sin relaciones)
+    public static Map<String, Object> partialUpdatePayload() {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("title", "Novillo Holstein actualizado");
+        payload.put("price", 380000);
+        payload.put("state", "ACTIVE");
+        return payload;
+    }
 }

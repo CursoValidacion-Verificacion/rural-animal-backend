@@ -1,33 +1,33 @@
 package com.project.demo.api.veterinary;
 
-import com.project.demo.api.config.SecurityMockBeans;
+import com.project.demo.logic.entity.auth.JwtService;
 import com.project.demo.logic.entity.role.RoleEnum;
 import com.project.demo.logic.entity.role.TblRole;
+import com.project.demo.logic.entity.role.TblRoleRepository;
 import com.project.demo.logic.entity.user.TblUser;
+import com.project.demo.logic.entity.user.UserRepository;
 import com.project.demo.logic.entity.veterinaryAppointment.AvailabilityDto;
 import com.project.demo.logic.entity.veterinaryAppointment.CreateAppointmentDto;
 import com.project.demo.logic.entity.veterinaryAppointment.VeterinaryAppointmentDto;
 import com.project.demo.logic.entity.veterinaryAppointment.VeterinaryAppointmentService;
 import com.project.demo.logic.utils.EmailService;
-import com.project.demo.rest.veterinaryAppointment.VeterinaryAppointmentRestController;
 import io.qameta.allure.Description;
 import io.qameta.allure.Story;
-import io.restassured.module.mockmvc.RestAssuredMockMvc;
+import io.restassured.RestAssured;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
@@ -37,26 +37,27 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
  * Pruebas funcionales de API para el endpoint /veterinary_appointments.
- * <p>
- * Valida la capa HTTP del controlador de citas veterinarias mediante REST Assured + MockMvc.
- * Cubre listado de citas del usuario autenticado, consulta de disponibilidad,
- * creación de cita exitosa, y manejo de errores (no encontrado, servicio fallido).
+ *
+ * Usa @SpringBootTest con servidor real y JWT real.
+ * VeterinaryAppointmentService y EmailService se mockean porque dependen de
+ * Google Calendar y SMTP que no estan disponibles en el entorno de pruebas.
+ * El resto del contexto (Spring Security, JwtService, MariaDB, Redis) es real.
  */
-@WebMvcTest(VeterinaryAppointmentRestController.class)
-@AutoConfigureMockMvc(addFilters = false)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ActiveProfiles("test")
 @DisplayName("API VeterinaryAppointments - Pruebas funcionales REST Assured")
-class VeterinaryAppointmentApiTest extends SecurityMockBeans {
+class VeterinaryAppointmentApiTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+    @LocalServerPort
+    private int port;
 
     @MockBean
     private VeterinaryAppointmentService veterinaryAppointmentService;
@@ -64,32 +65,73 @@ class VeterinaryAppointmentApiTest extends SecurityMockBeans {
     @MockBean
     private EmailService emailService;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private TblRoleRepository roleRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private JwtService jwtService;
+
     private TblUser testUser;
+    private TblUser adminUser;
+    private String buyerToken;
+    private String adminToken;
     private VeterinaryAppointmentDto appointmentDto;
 
     @BeforeEach
     void setUp() {
-        RestAssuredMockMvc.mockMvc(mockMvc);
+        RestAssured.baseURI = "http://localhost";
+        RestAssured.port = port;
 
-        TblRole buyerRole = new TblRole();
-        buyerRole.setTitle(RoleEnum.BUYER);
+        TblRole buyerRole = roleRepository.findByTitle(RoleEnum.BUYER)
+                .orElseGet(() -> {
+                    TblRole r = new TblRole();
+                    r.setTitle(RoleEnum.BUYER);
+                    return roleRepository.save(r);
+                });
+
+        TblRole adminRole = roleRepository.findByTitle(RoleEnum.ADMIN)
+                .orElseGet(() -> {
+                    TblRole r = new TblRole();
+                    r.setTitle(RoleEnum.ADMIN);
+                    return roleRepository.save(r);
+                });
 
         testUser = new TblUser();
-        testUser.setId(1L);
-        testUser.setEmail("buyer@ruraltest.com");
         testUser.setName("Ana");
         testUser.setLastName1("Mora");
-        testUser.setRole(buyerRole);
+        testUser.setEmail("ana.vet.test@ruraltest.com");
+        testUser.setPassword(passwordEncoder.encode("Test123!"));
+        testUser.setIdentification("112345678");
+        testUser.setPhoneNumber("88001122");
         testUser.setBirthDate(LocalDate.of(1995, 6, 15));
+        testUser.setRole(buyerRole);
+        testUser = userRepository.save(testUser);
+        buyerToken = jwtService.generateToken(testUser);
+
+        adminUser = new TblUser();
+        adminUser.setName("Admin");
+        adminUser.setLastName1("Vet");
+        adminUser.setEmail("admin.vet.test@ruraltest.com");
+        adminUser.setPassword(passwordEncoder.encode("Test123!"));
+        adminUser.setIdentification("212345678");
+        adminUser.setPhoneNumber("88002233");
+        adminUser.setBirthDate(LocalDate.of(1985, 1, 1));
+        adminUser.setRole(adminRole);
+        adminUser = userRepository.save(adminUser);
+        adminToken = jwtService.generateToken(adminUser);
 
         appointmentDto = new VeterinaryAppointmentDto();
+    }
 
-        // Configurar SecurityContext con el usuario autenticado
-        Authentication authentication = mock(Authentication.class);
-        SecurityContext securityContext = mock(SecurityContext.class);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        when(authentication.getPrincipal()).thenReturn(testUser);
-        SecurityContextHolder.setContext(securityContext);
+    @AfterEach
+    void tearDown() {
+        userRepository.deleteAll();
     }
 
     // =========================================================================
@@ -107,46 +149,48 @@ class VeterinaryAppointmentApiTest extends SecurityMockBeans {
         Page<VeterinaryAppointmentDto> page = new PageImpl<>(Collections.singletonList(appointmentDto));
         when(veterinaryAppointmentService.getUserAppointments(anyLong(), any(Pageable.class))).thenReturn(page);
 
-        RestAssuredMockMvc.given()
-                .contentType("application/json")
-                .param("page", 1)
-                .param("size", 10)
+        given()
+            .header("Authorization", "Bearer " + buyerToken)
+            .contentType("application/json")
+            .param("page", 1)
+            .param("size", 10)
         .when()
-                .get("/veterinary_appointments")
+            .get("/veterinary_appointments")
         .then()
-                .statusCode(HttpStatus.OK.value())
-                .body("data", notNullValue());
+            .statusCode(HttpStatus.OK.value())
+            .body("data", notNullValue());
     }
 
     /**
-     * TC-VET-02: Consultar disponibilidad con rango de fechas válido debe retornar HTTP 200.
+     * TC-VET-02: Consultar disponibilidad con rango de fechas valido debe retornar HTTP 200.
      */
     @Test
     @Story("Citas Veterinarias")
-    @Description("TC-VET-02: GET /veterinary_appointments/availability con fechas válidas debe retornar 200")
+    @Description("TC-VET-02: GET /veterinary_appointments/availability con fechas validas debe retornar 200")
     @DisplayName("TC-VET-02: GET /veterinary_appointments/availability retorna 200")
     void getAvailableDates_withValidRange_returns200() {
         List<AvailabilityDto> availabilities = Collections.singletonList(new AvailabilityDto());
         when(veterinaryAppointmentService.getAvailableDates(any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(availabilities);
 
-        RestAssuredMockMvc.given()
-                .contentType("application/json")
-                .param("startDate", "2026-04-01T08:00:00")
-                .param("endDate", "2026-04-07T18:00:00")
+        given()
+            .header("Authorization", "Bearer " + buyerToken)
+            .contentType("application/json")
+            .param("startDate", "2026-04-01T08:00:00")
+            .param("endDate", "2026-04-07T18:00:00")
         .when()
-                .get("/veterinary_appointments/availability")
+            .get("/veterinary_appointments/availability")
         .then()
-                .statusCode(HttpStatus.OK.value())
-                .body("data", notNullValue());
+            .statusCode(HttpStatus.OK.value())
+            .body("data", notNullValue());
     }
 
     /**
-     * TC-VET-03: Crear cita veterinaria con datos válidos debe retornar HTTP 200.
+     * TC-VET-03: Crear cita veterinaria con datos validos debe retornar HTTP 200.
      */
     @Test
     @Story("Citas Veterinarias")
-    @Description("TC-VET-03: POST /veterinary_appointments con datos válidos debe retornar 200")
+    @Description("TC-VET-03: POST /veterinary_appointments con datos validos debe retornar 200")
     @DisplayName("TC-VET-03: POST /veterinary_appointments retorna 200")
     void createAppointment_withValidData_returns200() throws Exception {
         when(veterinaryAppointmentService.createAppointment(any(CreateAppointmentDto.class), anyLong()))
@@ -154,16 +198,17 @@ class VeterinaryAppointmentApiTest extends SecurityMockBeans {
 
         Map<String, Object> payload = new HashMap<>();
         payload.put("appointmentDate", "2026-04-05T10:00:00");
-        payload.put("reason", "Revisión general del ganado");
+        payload.put("reason", "Revision general del ganado");
         payload.put("veterinaryId", 1);
 
-        RestAssuredMockMvc.given()
-                .contentType("application/json")
-                .body(payload)
+        given()
+            .header("Authorization", "Bearer " + buyerToken)
+            .contentType("application/json")
+            .body(payload)
         .when()
-                .post("/veterinary_appointments")
+            .post("/veterinary_appointments")
         .then()
-                .statusCode(HttpStatus.OK.value());
+            .statusCode(HttpStatus.OK.value());
     }
 
     /**
@@ -177,13 +222,14 @@ class VeterinaryAppointmentApiTest extends SecurityMockBeans {
         when(veterinaryAppointmentService.getAll())
                 .thenReturn(Collections.singletonList(appointmentDto));
 
-        RestAssuredMockMvc.given()
-                .contentType("application/json")
+        given()
+            .header("Authorization", "Bearer " + adminToken)
+            .contentType("application/json")
         .when()
-                .get("/veterinary_appointments/all")
+            .get("/veterinary_appointments/all")
         .then()
-                .statusCode(HttpStatus.OK.value())
-                .body("data", notNullValue());
+            .statusCode(HttpStatus.OK.value())
+            .body("data", notNullValue());
     }
 
     // =========================================================================
@@ -201,12 +247,13 @@ class VeterinaryAppointmentApiTest extends SecurityMockBeans {
         when(veterinaryAppointmentService.getUserAppointments(anyLong(), any(Pageable.class)))
                 .thenThrow(new RuntimeException("Error de base de datos"));
 
-        RestAssuredMockMvc.given()
-                .contentType("application/json")
+        given()
+            .header("Authorization", "Bearer " + buyerToken)
+            .contentType("application/json")
         .when()
-                .get("/veterinary_appointments")
+            .get("/veterinary_appointments")
         .then()
-                .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
+            .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
     }
 
     /**
@@ -222,15 +269,16 @@ class VeterinaryAppointmentApiTest extends SecurityMockBeans {
 
         Map<String, Object> payload = new HashMap<>();
         payload.put("appointmentDate", "2026-04-05T10:00:00");
-        payload.put("reason", "Revisión");
+        payload.put("reason", "Revision");
         payload.put("veterinaryId", 1);
 
-        RestAssuredMockMvc.given()
-                .contentType("application/json")
-                .body(payload)
+        given()
+            .header("Authorization", "Bearer " + buyerToken)
+            .contentType("application/json")
+            .body(payload)
         .when()
-                .post("/veterinary_appointments")
+            .post("/veterinary_appointments")
         .then()
-                .statusCode(HttpStatus.BAD_REQUEST.value());
+            .statusCode(HttpStatus.BAD_REQUEST.value());
     }
 }
