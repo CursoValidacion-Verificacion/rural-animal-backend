@@ -3,6 +3,8 @@ plugins {
 	id 'org.springframework.boot' version '3.2.5'
 	id 'io.spring.dependency-management' version '1.1.4'
 	id 'io.qameta.allure' version '2.11.2'
+	id 'jacoco'
+	id 'org.sonarqube' version '7.2.3.7755'
 }
 
 group = 'com.project'
@@ -29,6 +31,8 @@ task packageAllureReport(type: Zip, dependsOn: allureReport) {
 repositories {
 	mavenCentral()
 }
+
+
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -91,6 +95,58 @@ bootJar {
 	launchScript()
 }
 
-tasks.named('test') {
+jacoco {
+	toolVersion = "0.8.13"
+}
+
+tasks.withType(Test).configureEach {
 	useJUnitPlatform()
+	finalizedBy jacocoTestReport
+}
+
+tasks.register('unitTest', Test) {
+	useJUnitPlatform {
+		includeTags 'unit'
+	}
+}
+
+tasks.register('apiTest', Test) {
+	useJUnitPlatform {
+		includeTags 'api'
+	}
+}
+
+
+jacocoTestReport {
+	dependsOn unitTest
+	executionData(unitTest)
+
+
+	reports {
+		xml.required = true
+		html.required = true
+		csv.required = false
+	}
+
+}
+
+
+
+tasks.named('unitTest') {
+	finalizedBy jacocoTestReport
+}
+
+//tasks.named('apiTest') {
+//	finalizedBy jacocoTestReport
+//}
+
+sonar {
+	properties {
+		property "sonar.projectKey", "rural-animal-backend"
+		property "sonar.projectName", "rural-animal-backend"
+		property "sonar.sources", "src/main/java"
+		property "sonar.tests", "src/test/java"
+		property "sonar.coverage.jacoco.xmlReportPaths",
+				"$buildDir/reports/jacoco/test/jacocoTestReport.xml"
+	}
 }

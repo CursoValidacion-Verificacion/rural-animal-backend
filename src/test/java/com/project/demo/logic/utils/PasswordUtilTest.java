@@ -2,6 +2,7 @@ package com.project.demo.logic.utils;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.RepeatedTest;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.util.regex.Pattern;
@@ -9,6 +10,7 @@ import java.util.regex.Pattern;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("PasswordUtil")
+@Tag("unit")
 class PasswordUtilTest {
 
     private static final Pattern UPPERCASE = Pattern.compile("[A-Z]");

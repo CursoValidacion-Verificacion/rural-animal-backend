@@ -1,0 +1,32 @@
+name: CI Quality Pipeline
+
+on:
+  push:
+    branches: [ "pipeline-test" ]
+  pull_request:
+    branches: [ "pipeline-test" ]
+
+jobs:
+  unit-test-and-coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configurar JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Dar permisos a gradlew
+        run: chmod +x gradlew
+
+      - name: Ejecutar pruebas unitarias
+        run: ./gradlew clean unitTest
+
+      - name: Generar cobertura con JaCoCo
+        run: ./gradlew jacocoTestReport

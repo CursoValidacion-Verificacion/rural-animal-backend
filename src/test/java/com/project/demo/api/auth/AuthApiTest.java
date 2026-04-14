@@ -11,10 +11,7 @@ import com.project.demo.logic.utils.EmailService;
 import io.qameta.allure.Description;
 import io.qameta.allure.Story;
 import io.restassured.RestAssured;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -39,6 +36,7 @@ import static org.hamcrest.Matchers.notNullValue;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 @DisplayName("API Auth - Pruebas funcionales REST Assured")
+@Tag("api")
 class AuthApiTest {
 
     @LocalServerPort
