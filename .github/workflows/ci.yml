@@ -4,7 +4,12 @@ on:
   push:
     branches: [ "pipeline-test" ]
   pull_request:
+    branches: [ "pipeline-test" ]
     types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: read
 
 jobs:
   build-test-and-analyze:
@@ -66,6 +71,3 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: ./gradlew sonar --info
-
-
-
