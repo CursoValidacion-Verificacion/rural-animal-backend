@@ -86,6 +86,9 @@ dependencies {
 
 
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+//	implementation 'com.microsoft.sqlserver:mssql-jdbc:12.6.1.jre11'
+	runtimeOnly 'com.microsoft.sqlserver:mssql-jdbc:12.10.0.jre11'
+	runtimeOnly 'com.microsoft.sqlserver:mssql-jdbc'
 }
 
 bootJar {
@@ -117,22 +120,9 @@ tasks.register('apiTest', Test) {
 }
 
 
-jacocoTestReport {
-	dependsOn unitTest
-	executionData(unitTest)
-
-
-	reports {
-		xml.required = true
-		html.required = true
-		csv.required = false
-	}
-
-}
-// Usar esto
 //jacocoTestReport {
-//	dependsOn unitTest, apiTest
-//	executionData(unitTest, apiTest)
+//	dependsOn unitTest
+//	executionData(unitTest)
 //
 //
 //	reports {
@@ -143,15 +133,30 @@ jacocoTestReport {
 //
 //}
 
+jacocoTestReport {
+	dependsOn tasks.named('unitTest'), tasks.named('apiTest')
+	executionData(
+			fileTree(buildDir).include(
+					"jacoco/*.exec"
+			)
+	)
+
+	reports {
+		xml.required = true
+		html.required = true
+		csv.required = false
+	}
+}
+
 
 
 tasks.named('unitTest') {
 	finalizedBy jacocoTestReport
 }
-//Descomentar
-//tasks.named('apiTest') {
-//	finalizedBy jacocoTestReport
-//}
+
+tasks.named('apiTest') {
+	finalizedBy jacocoTestReport
+}
 
 sonar {
 	properties {

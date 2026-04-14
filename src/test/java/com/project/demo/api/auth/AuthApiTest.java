@@ -1,6 +1,7 @@
 package com.project.demo.api.auth;
 
 import com.project.demo.api.data.AuthTestData;
+import com.project.demo.logic.entity.direction.TblDirection;
 import com.project.demo.logic.entity.direction.TblDirectionRepository;
 import com.project.demo.logic.entity.role.RoleEnum;
 import com.project.demo.logic.entity.role.TblRole;
@@ -72,24 +73,28 @@ class AuthApiTest {
                     return roleRepository.save(r);
                 });
 
+        TblDirection direction = new TblDirection();
+        direction.setProvince("San Jose");
+        direction.setCanton("Central");
+        direction.setDistrict("Carmen");
+        direction.setOtherDetails("Direccion de prueba");
+        direction = directionRepository.save(direction);
+
         // Insertar usuario de prueba para escenarios de login
         testUser = new TblUser();
         testUser.setName("Andres");
         testUser.setLastName1("Torres");
-        testUser.setEmail("andres.test.auth@ruraltest.com");
+        testUser.setEmail("andres.test.auth" + System.nanoTime() + "@ruraltest.com");
         testUser.setPassword(passwordEncoder.encode("Test123!"));
-        testUser.setIdentification("112345678");
         testUser.setPhoneNumber("88001122");
+        testUser.setIdentification("112345" + System.nanoTime());
         testUser.setBirthDate(LocalDate.of(2000, 5, 10));
         testUser.setRole(buyerRole);
+        testUser.setDirection(direction);
         testUser = userRepository.save(testUser);
     }
 
-    @AfterEach
-    void tearDown() {
-        userRepository.deleteAll();
-        directionRepository.deleteAll();
-    }
+
 
     // =========================================================================
     // Escenarios POSITIVOS
@@ -103,14 +108,21 @@ class AuthApiTest {
     @Description("TC-AUTH-01: Login con credenciales validas debe retornar 200 y un token JWT")
     @DisplayName("TC-AUTH-01: Login valido retorna 200 y token")
     void login_withValidCredentials_returns200AndToken() {
+        String loginPayload = """
+        {
+          "email": "%s",
+          "password": "Test123!"
+        }
+        """.formatted(testUser.getEmail());
+
         given()
-            .contentType("application/json")
-            .body(AuthTestData.validLoginPayload())
-        .when()
-            .post("/auth/login")
-        .then()
-            .statusCode(HttpStatus.OK.value())
-            .body("token", notNullValue());
+                .contentType("application/json")
+                .body(loginPayload)
+                .when()
+                .post("/auth/login")
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body("token", notNullValue());
     }
 
     /**
@@ -226,13 +238,29 @@ class AuthApiTest {
     @Description("TC-AUTH-08: Registro con email existente debe retornar 409")
     @DisplayName("TC-AUTH-08: Registro con email duplicado retorna 409")
     void signup_withExistingEmail_returns409() {
+        String payload = """
+    {
+      "name": "Nuevo",
+      "lastName1": "Usuario",
+      "lastName2": "Prueba",
+      "email": "%s",
+      "password": "Test123!",
+      "identification": "%s",
+      "phoneNumber": "88001122",
+      "birthDate": "2000-05-10"
+    }
+    """.formatted(
+                testUser.getEmail(),
+                "112345" + System.nanoTime()
+        );
+
         given()
-            .contentType("application/json")
-            .body(AuthTestData.duplicateEmailSignupPayload())
-        .when()
-            .post("/auth/signup")
-        .then()
-            .statusCode(HttpStatus.CONFLICT.value());
+                .contentType("application/json")
+                .body(payload)
+                .when()
+                .post("/auth/signup")
+                .then()
+                .statusCode(HttpStatus.CONFLICT.value());
     }
 
     /**

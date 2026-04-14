@@ -5,7 +5,7 @@ services:
     container_name: rural-animal-mariadb
     restart: unless-stopped
     environment:
-      MARIADB_ROOT_PASSWORD: 123456
+      MARIADB_ROOT_PASSWORD: 12345
       MARIADB_DATABASE: proyecto3
       MARIADB_USER: rural_user
       MARIADB_PASSWORD: 123456

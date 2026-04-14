@@ -70,9 +70,9 @@ class NotificationApiTest {
         testUser = new TblUser();
         testUser.setName("Buyer");
         testUser.setLastName1("Notif");
-        testUser.setEmail("buyer.notif.test@ruraltest.com");
+        testUser.setEmail("buyer.notif.test"+ System.nanoTime() +"@ruraltest.com");
         testUser.setPassword(passwordEncoder.encode("Test123!"));
-        testUser.setIdentification("112345678");
+        testUser.setIdentification("112345678" + System.nanoTime());
         testUser.setPhoneNumber("88001122");
         testUser.setBirthDate(LocalDate.of(1990, 1, 1));
         testUser.setRole(buyerRole);
@@ -87,11 +87,7 @@ class NotificationApiTest {
         testNotification = notificationRepository.save(testNotification);
     }
 
-    @AfterEach
-    void tearDown() {
-        notificationRepository.deleteAll();
-        userRepository.deleteAll();
-    }
+
 
     // =========================================================================
     // Escenarios POSITIVOS

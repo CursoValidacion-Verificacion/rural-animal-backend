@@ -74,20 +74,16 @@ class UserApiTest {
         testUser = new TblUser();
         testUser.setName("Carlos");
         testUser.setLastName1("Rodriguez");
-        testUser.setEmail("carlos.user.test@ruraltest.com");
+        testUser.setEmail("carlos.user.test"+ System.nanoTime() + "@ruraltest.com");
         testUser.setPassword(passwordEncoder.encode("Test123!"));
-        testUser.setIdentification("112345678");
+        testUser.setIdentification("112345678" + System.nanoTime());
         testUser.setPhoneNumber("88001122");
         testUser.setBirthDate(LocalDate.of(1995, 3, 20));
         testUser.setRole(buyerRole);
         testUser = userRepository.save(testUser);
     }
 
-    @AfterEach
-    void tearDown() {
-        userRepository.deleteAll();
-        directionRepository.deleteAll();
-    }
+
 
     // =========================================================================
     // Escenarios POSITIVOS
@@ -228,12 +224,28 @@ class UserApiTest {
     @Description("TC-USER-08: POST /users con email ya registrado debe retornar 409")
     @DisplayName("TC-USER-08: POST /users con email duplicado retorna 409")
     void addUser_withDuplicateEmail_returns409() {
+        String payload = """
+    {
+      "name": "Nuevo",
+      "lastName1": "Usuario",
+      "lastName2": "Prueba",
+      "email": "%s",
+      "password": "Test123!",
+      "identification": "%s",
+      "phoneNumber": "88001122",
+      "birthDate": "2000-05-10"
+    }
+    """.formatted(
+                testUser.getEmail(),
+                "112345" + System.nanoTime()
+        );
+
         given()
-            .contentType("application/json")
-            .body(UserTestData.duplicateEmailPayload())
-        .when()
-            .post("/users")
-        .then()
-            .statusCode(HttpStatus.CONFLICT.value());
+                .contentType("application/json")
+                .body(payload)
+                .when()
+                .post("/users")
+                .then()
+                .statusCode(HttpStatus.CONFLICT.value());
     }
 }

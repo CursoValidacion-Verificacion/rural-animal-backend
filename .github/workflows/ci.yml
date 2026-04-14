@@ -10,6 +10,20 @@ jobs:
   unit-test-and-coverage:
     runs-on: ubuntu-latest
 
+    services:
+      mariadb:
+        image: mariadb:11
+        env:
+          MARIADB_ROOT_PASSWORD: 12345
+          MARIADB_DATABASE: proyecto3_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mariadb-admin ping -h 127.0.0.1 -uroot -p12345"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
     steps:
       - name: Checkout del repositorio
         uses: actions/checkout@v4
@@ -17,10 +31,11 @@ jobs:
           fetch-depth: 0
 
       - name: Configurar JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21
+          cache: gradle
 
       - name: Dar permisos a gradlew
         run: chmod +x gradlew
@@ -28,5 +43,21 @@ jobs:
       - name: Ejecutar pruebas unitarias
         run: ./gradlew clean unitTest
 
-      - name: Generar cobertura con JaCoCo
+      - name: Ejecutar pruebas API
+        env:
+          SPRING_PROFILES_ACTIVE: test
+          SPRING_DATASOURCE_URL: jdbc:mariadb://localhost:3306/proyecto3_test
+          SPRING_DATASOURCE_USERNAME: root
+          SPRING_DATASOURCE_PASSWORD: 12345
+        run: ./gradlew apiTest
+
+      - name: Generar cobertura JaCoCo
         run: ./gradlew jacocoTestReport
+
+      - name: Subir reporte JaCoCo
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: |
+            build/reports/jacoco/test/jacocoTestReport.xml
+            build/reports/jacoco/test/html

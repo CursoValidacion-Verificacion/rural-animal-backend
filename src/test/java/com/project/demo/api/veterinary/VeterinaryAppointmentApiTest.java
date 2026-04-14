@@ -103,9 +103,9 @@ class VeterinaryAppointmentApiTest {
         testUser = new TblUser();
         testUser.setName("Ana");
         testUser.setLastName1("Mora");
-        testUser.setEmail("ana.vet.test@ruraltest.com");
+        testUser.setEmail("ana.vet.test"+System.nanoTime()+"@ruraltest.com");
         testUser.setPassword(passwordEncoder.encode("Test123!"));
-        testUser.setIdentification("112345678");
+        testUser.setIdentification("112345678"+System.nanoTime());
         testUser.setPhoneNumber("88001122");
         testUser.setBirthDate(LocalDate.of(1995, 6, 15));
         testUser.setRole(buyerRole);
@@ -115,9 +115,9 @@ class VeterinaryAppointmentApiTest {
         adminUser = new TblUser();
         adminUser.setName("Admin");
         adminUser.setLastName1("Vet");
-        adminUser.setEmail("admin.vet.test@ruraltest.com");
+        adminUser.setEmail("admin.vet.test"+System.nanoTime()+"@ruraltest.com");
         adminUser.setPassword(passwordEncoder.encode("Test123!"));
-        adminUser.setIdentification("212345678");
+        adminUser.setIdentification("212345678"+System.nanoTime());
         adminUser.setPhoneNumber("88002233");
         adminUser.setBirthDate(LocalDate.of(1985, 1, 1));
         adminUser.setRole(adminRole);
@@ -127,10 +127,7 @@ class VeterinaryAppointmentApiTest {
         appointmentDto = new VeterinaryAppointmentDto();
     }
 
-    @AfterEach
-    void tearDown() {
-        userRepository.deleteAll();
-    }
+
 
     // =========================================================================
     // Escenarios POSITIVOS
