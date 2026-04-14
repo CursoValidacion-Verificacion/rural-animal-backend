@@ -2,8 +2,7 @@ name: CI Quality Pipeline
 
 on:
   push:
-    branches:
-      - pipeline-test
+    branches: [ "pipeline-test" ]
   pull_request:
     types: [opened, synchronize, reopened]
 
@@ -67,3 +66,6 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: ./gradlew sonar --info
+
+
+
