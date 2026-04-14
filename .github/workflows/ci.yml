@@ -57,4 +57,4 @@ jobs:
       - name: Ejecutar análisis en SonarCloud
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: ./gradlew sonar
+        run: ./gradlew sonar --info

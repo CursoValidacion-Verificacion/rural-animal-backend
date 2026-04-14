@@ -120,19 +120,6 @@ tasks.register('apiTest', Test) {
 }
 
 
-//jacocoTestReport {
-//	dependsOn unitTest
-//	executionData(unitTest)
-//
-//
-//	reports {
-//		xml.required = true
-//		html.required = true
-//		csv.required = false
-//	}
-//
-//}
-
 jacocoTestReport {
 	dependsOn tasks.named('unitTest'), tasks.named('apiTest')
 	executionData(fileTree(buildDir).include("jacoco/*.exec"))
