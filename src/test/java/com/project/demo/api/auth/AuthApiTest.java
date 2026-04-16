@@ -80,13 +80,13 @@ class AuthApiTest {
         direction.setOtherDetails("Direccion de prueba");
         direction = directionRepository.save(direction);
 
-        // Insertar usuario de prueba para escenarios de login
+        // Insertar usuario de prueba para escenarios de loginS
         testUser = new TblUser();
         testUser.setName("Andres");
         testUser.setLastName1("Torres");
         testUser.setEmail("andres.test.auth" + System.nanoTime() + "@ruraltest.com");
         testUser.setPassword(passwordEncoder.encode("Test123!"));
-        testUser.setPhoneNumber("88001122");
+        testUser.setPhoneNumber("88001123");
         testUser.setIdentification("112345" + System.nanoTime());
         testUser.setBirthDate(LocalDate.of(2000, 5, 10));
         testUser.setRole(buyerRole);
