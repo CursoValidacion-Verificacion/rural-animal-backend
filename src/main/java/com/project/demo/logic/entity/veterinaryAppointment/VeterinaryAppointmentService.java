@@ -1,10 +1,10 @@
 package com.project.demo.logic.entity.veterinaryAppointment;
 
-import com.project.demo.logic.entity.cache.RedisCacheService;
 import com.project.demo.logic.entity.calendar.CalendarService;
 import com.project.demo.logic.entity.calendar.EventDTO;
 import com.project.demo.logic.entity.user.TblUser;
 import com.project.demo.logic.entity.user.UserRepository;
+import com.project.demo.logic.entity.veterinary.TblVeterinary;
 import com.project.demo.logic.entity.veterinary.TblVeterinaryRepository;
 import com.project.demo.logic.entity.veterinary.VeterinaryAvailabilityDto;
 import org.springframework.data.domain.Pageable;
@@ -14,12 +14,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Transactional
@@ -34,31 +33,15 @@ public class VeterinaryAppointmentService {
     private final CalendarService calendarService;
     private final UserRepository userRepository;
 
-    private final RedisCacheService<List<TimeSlotDto>> cacheService;
-    private static final Duration CACHE_DURATION = Duration.ofHours(24);
-    private static final String SLOTS_CACHE_KEY_PREFIX = "slots:";
-
     public VeterinaryAppointmentService(
             TblVeterinaryAppointmentRepository veterinaryAppointmentRepository,
             TblVeterinaryRepository veterinaryRepository,
             CalendarService calendarService,
-            UserRepository userRepository,
-            RedisCacheService<List<TimeSlotDto>> cacheService) {
+            UserRepository userRepository) {
         this.veterinaryAppointmentRepository = veterinaryAppointmentRepository;
         this.veterinaryRepository = veterinaryRepository;
         this.calendarService = calendarService;
         this.userRepository = userRepository;
-        this.cacheService = cacheService;
-    }
-
-    /**
-     * Genera una clave de caché basada en una fecha y hora proporcionada.
-     *
-     * @param date La fecha y hora que se utilizará para generar la clave.
-     * @return Una cadena que representa la clave de caché generada.
-     */
-    private String generateCacheKey(LocalDateTime date) {
-        return SLOTS_CACHE_KEY_PREFIX + date.format(DateTimeFormatter.ISO_DATE);
     }
 
     /**
@@ -115,52 +98,57 @@ public class VeterinaryAppointmentService {
     }
 
     /**
-     * Obtiene los intervalos de tiempo disponibles para un día específico, considerando la disponibilidad de veterinarios.
+     * Convierte una entidad veterinaria al DTO usado por la vista de disponibilidad.
      *
-     * @param date La fecha en la que se desea conocer los intervalos de tiempo disponibles.
-     * @return Una lista de objetos TimeSlotDto que representan los intervalos de tiempo disponibles, cada uno con una lista
-     * de veterinarios disponibles durante ese intervalo.
+     * @param veterinary La entidad veterinaria a convertir.
+     * @return DTO con la información pública del veterinario.
      */
-
-    private List<TimeSlotDto> getAvailableTimeSlots(LocalDateTime date) {
-        String cacheKey = generateCacheKey(date);
-
-        return cacheService.getOrSet(cacheKey, CACHE_DURATION, () -> {
-            List<TimeSlotDto> timeSlots = generateDailySlots(date);
-
-            for (TimeSlotDto slot : timeSlots) {
-                List<VeterinaryAvailabilityDto> availableVets =
-                        getAvailableVeterinarians(slot.getStartTime(), slot.getEndTime());
-                slot.setAvailableVeterinarians(availableVets);
-            }
-
-            return timeSlots.stream()
-                    .filter(slot -> !slot.getAvailableVeterinarians().isEmpty())
-                    .collect(Collectors.toList());
-        });
+    private VeterinaryAvailabilityDto mapToVeterinaryAvailabilityDto(
+            TblVeterinary veterinary) {
+        var dto = new VeterinaryAvailabilityDto();
+        dto.setId(veterinary.getId());
+        dto.setName(veterinary.getName());
+        dto.setLastName1(veterinary.getLastName1());
+        dto.setLastName2(veterinary.getLastName2());
+        dto.setSpeciality(veterinary.getSpeciallity());
+        return dto;
     }
 
     /**
-     * Obtiene una lista de veterinarios disponibles dentro de un rango de tiempo específico.
+     * Obtiene los intervalos de tiempo disponibles para un día específico, considerando la disponibilidad de veterinarios.
+     * La disponibilidad se calcula en memoria con las citas ya cargadas para el rango completo,
+     * evitando consultas repetidas por slot y por veterinario.
      *
-     * @param startTime El inicio del rango de tiempo para verificar la disponibilidad.
-     * @param endTime   El fin del rango de tiempo para verificar la disponibilidad.
-     * @return Una lista de objetos VeterinaryAvailabilityDto que representan a los veterinarios disponibles.
+     * @param date La fecha en la que se desea conocer los intervalos de tiempo disponibles.
+     * @param allVeterinarians Lista completa de veterinarios disponibles en el sistema.
+     * @param appointmentsInRange Lista de citas dentro del rango solicitado.
+     * @return Una lista de objetos TimeSlotDto que representan los intervalos de tiempo disponibles, cada uno con una lista
+     * de veterinarios disponibles durante ese intervalo.
      */
-    private List<VeterinaryAvailabilityDto> getAvailableVeterinarians(LocalDateTime startTime, LocalDateTime endTime) {
-        var allVeterinarians = veterinaryRepository.findAll();
+    private List<TimeSlotDto> getAvailableTimeSlots(
+            LocalDateTime date,
+            List<TblVeterinary> allVeterinarians,
+            List<TblVeterinaryAppointment> appointmentsInRange) {
+        List<TimeSlotDto> timeSlots = generateDailySlots(date);
 
-        return allVeterinarians.stream()
-                .filter(vet -> isVeterinaryAvailable(vet.getId(), startTime, endTime))
-                .map(vet -> {
-                    var dto = new VeterinaryAvailabilityDto();
-                    dto.setId(vet.getId());
-                    dto.setName(vet.getName());
-                    dto.setLastName1(vet.getLastName1());
-                    dto.setLastName2(vet.getLastName2());
-                    dto.setSpeciality(vet.getSpeciallity());
-                    return dto;
-                })
+        for (TimeSlotDto slot : timeSlots) {
+            Set<Long> occupiedVeterinaryIds = appointmentsInRange.stream()
+                    .filter(appointment ->
+                            appointment.getStartDate().isBefore(slot.getEndTime()) &&
+                            appointment.getEndDate().isAfter(slot.getStartTime()))
+                    .map(appointment -> appointment.getVeterinary().getId())
+                    .collect(Collectors.toSet());
+
+            List<VeterinaryAvailabilityDto> availableVets = allVeterinarians.stream()
+                    .filter(veterinary -> !occupiedVeterinaryIds.contains(veterinary.getId()))
+                    .map(this::mapToVeterinaryAvailabilityDto)
+                    .collect(Collectors.toList());
+
+            slot.setAvailableVeterinarians(availableVets);
+        }
+
+        return timeSlots.stream()
+                .filter(slot -> !slot.getAvailableVeterinarians().isEmpty())
                 .collect(Collectors.toList());
     }
 
@@ -223,13 +211,18 @@ public class VeterinaryAppointmentService {
      */
     public List<AvailabilityDto> getAvailableDates(LocalDateTime startDate, LocalDateTime endDate) {
         List<AvailabilityDto> availabilities = new ArrayList<>();
+        var allVeterinarians = veterinaryRepository.findAll();
+        List<TblVeterinaryAppointment> appointmentsInRange =
+                veterinaryAppointmentRepository.findAppointmentsInRange(startDate, endDate);
         LocalDateTime currentDate = startDate;
 
         while (!currentDate.isAfter(endDate)) {
             if (isWorkingDay(currentDate)) {
                 AvailabilityDto availability = new AvailabilityDto();
                 availability.setDate(currentDate);
-                availability.setAvailableSlots(getAvailableTimeSlots(currentDate));
+                availability.setAvailableSlots(
+                        getAvailableTimeSlots(currentDate, allVeterinarians, appointmentsInRange)
+                );
                 availabilities.add(availability);
             }
             currentDate = currentDate.plusDays(1);
@@ -270,34 +263,6 @@ public class VeterinaryAppointmentService {
             appointment.setState("Confirmada");
 
             appointment = veterinaryAppointmentRepository.save(appointment);
-
-            String cacheKey = generateCacheKey(appointmentDTO.getStartDate());
-            List<TimeSlotDto> currentSlots = cacheService.get(cacheKey).orElse(null);
-
-            if (currentSlots != null) {
-                boolean slotUpdated = false;
-                for (TimeSlotDto slot : currentSlots) {
-
-                    if (slot.getStartTime().equals(appointmentDTO.getStartDate())) {
-                        slot.setAvailableVeterinarians(
-                                slot.getAvailableVeterinarians().stream()
-                                        .filter(vet -> !vet.getId().equals(appointmentDTO.getVeterinaryId()))
-                                        .collect(Collectors.toList())
-                        );
-                        slotUpdated = true;
-                        break;
-                    }
-                }
-
-                if (slotUpdated) {
-
-                    List<TimeSlotDto> updatedSlots = currentSlots.stream()
-                            .filter(slot -> !slot.getAvailableVeterinarians().isEmpty())
-                            .collect(Collectors.toList());
-
-                    cacheService.set(cacheKey, updatedSlots, CACHE_DURATION);
-                }
-            }
 
             EventDTO eventDTO = new EventDTO();
             eventDTO.setSummary("Cita Veterinaria - " + appointment.getVeterinary().getName());
